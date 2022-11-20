@@ -24,8 +24,8 @@ function verifyJWT (req, res, next) {
         return res.status(401).json("Unauthorzed Access");
     }
     const token = authHeader.split(" ")[1];
-    jwt.verify(token, process.env.ACCESS_TOKEN, function(err, decoded)
-    {
+
+    jwt.verify(token, process.env.ACCESS_TOKEN, function(err, decoded){
 
         if(err) {
             res.status(403).send({message: "Forbidden Access"})
@@ -60,8 +60,8 @@ async function run() {
         app.get('/bookings', verifyJWT, async(req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
-            if (email !== decodedEmail) {
-                res.status(403).send({message: "Forbidden Access"});
+            if (decodedEmail !== email) {
+                return res.status(401).send({message: "Unauthorzed Access"})
             }
             const query = {email: email};
             const bookings = await bookingCollections.find(query).toArray();
@@ -95,6 +95,12 @@ async function run() {
             else{
                 return res.status(403).send({accessToken: ""});
             }
+        }),
+
+        app.get('/users', async (req, res) =>{
+            const query = {};
+            const users = await usersCollections.find(query).toArray();
+            res.send(users);
         })
 
         app.post('/users', async(req, res) => {
