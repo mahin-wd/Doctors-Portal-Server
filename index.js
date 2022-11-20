@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require('jsonwebtoken');
 const app = express();
 const port = process.env.PORT || 5000;
@@ -101,13 +101,33 @@ async function run() {
             const query = {};
             const users = await usersCollections.find(query).toArray();
             res.send(users);
-        })
+        });
 
         app.post('/users', async(req, res) => {
             const user = req.body;
             const result = await usersCollections.insertOne(user);
             res.send(result);
+        });
+
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await usersCollections.findOne(query);
+            res.send({isAdmin: user?.role === "Admin"});
         })
+
+        app.put('/users/admin/:id', async(req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const options = {upsert: true}
+            const updatedDoc = {
+                $set: {
+                    role: "Admin"
+                }
+            }
+            const result = await usersCollections.updateOne(query, updatedDoc, options);
+            res.send(result);
+        });
     }
     finally {
 
